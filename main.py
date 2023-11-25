@@ -16,7 +16,9 @@ print(">>SEED:", world.seed)
 torch.autograd.set_detect_anomaly(True)
 Recmodel = register.MODELS[world.model_name](world.config, dataset)
 Recmodel = Recmodel.to(world.device)
-bpr = utils.BPRLoss(Recmodel, world.config)
+loss_class = utils.BPRLoss(Recmodel, world.config)
+if world.model_name in ['SocialSimGCL','SimGCL']:
+    loss_class = utils.SimGCLLoss(Recmodel, world.config)
 
 weight_file = utils.getFileName()
 print(f"load and save to {weight_file}")
@@ -58,8 +60,8 @@ try:
                 best_pre_cold = results_cold['precision'][0]
                 low_count_cold = 0
 
-        loss = Procedure.BPR_train_original(dataset, Recmodel, bpr, epoch)
-        print(f'[saved][BPR aver loss{loss:.3e}]')
+        loss = Procedure.train_original(dataset, Recmodel, loss_class, epoch)
+        print(f'[saved][aver loss{loss:.3e}]')
         torch.save(Recmodel.state_dict(), weight_file)
 finally:
     print(f"\nbest recall at 10:{best_recall}")
