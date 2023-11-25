@@ -1,7 +1,7 @@
 import world
 import torch
 import torch.nn as nn
-
+import torch.nn.functional as F
 
 class PureBPR(nn.Module):
     def __init__(self, config, dataset):
@@ -117,6 +117,83 @@ class LightGCN(nn.Module):
         loss = torch.mean(torch.nn.functional.softplus(neg_scores - pos_scores))
 
         return loss, reg_loss
+
+class SimGCL(LightGCN):
+    def __init__(self, config, dataset):
+        super(SimGCL, self).__init__(config, dataset)
+        self.noise_norm = config['noise_norm']
+        self.lam = config['lam']
+        self.tau = config['tau']
+    def cl_loss(self, user_idx, item_idx):
+        device = self.embedding_item.weight.device
+        user_idx = torch.unique(torch.tensor(user_idx, device=device))
+        item_idx = torch.unique(torch.tensor(item_idx, device=device))
+        users_1, items_1 = self.computer(perturbed=True)
+        users_2, items_2 = self.computer(perturbed=True)
+        user_cl_loss = self.infoNCE(users_1[user_idx], users_2[user_idx])
+        item_cl_loss = self.infoNCE(items_1[item_idx], items_2[item_idx])
+        return self.lam * (user_cl_loss + item_cl_loss)
+
+    def random_noise(self, tensor):
+        noise = torch.rand_like(tensor, device=tensor.device)
+        noise = F.normalize(noise, dim=1) * self.noise_norm * torch.sign(tensor)
+        return noise
+
+
+    def computer(self, perturbed=False):
+        if not perturbed:
+            return super().computer()
+        else:
+            user_weight = self.embedding_user.weight
+            item_weight = self.embedding_item.weight
+            embed = torch.cat([user_weight, item_weight])
+            embs = []
+            for layer in range(self.n_layers):
+                prod = torch.sparse.mm(self.interactionGraph, embed)
+                embed = prod + self.random_noise(prod)
+                embs.append(embed)
+            embs = torch.stack(embs, dim=1)
+            out = torch.mean(embs, dim=1)
+            users, items = torch.split(out, [self.num_user, self.num_item])
+            return users, items
+    def infoNCE(self, emb1, emb2):
+        emb1, emb2 = F.normalize(emb1, dim=1), F.normalize(emb2, dim=1)
+        pos_score = (emb1 @ emb2.T) / self.tau
+        score = torch.diag(F.log_softmax(pos_score, dim=1))
+        return -score.mean()
+
+class SocialSimGCL(SimGCL):
+
+    def _init_weight(self):
+        super(SocialLGN, self)._init_weight()
+        self.socialGraph = self.dataset.getSocialGraph()
+        self.Graph_Comb = Graph_Comb(self.latent_dim)
+    
+
+    def computer(self, perturbed=False):
+        users_emb = self.embedding_user.weight
+        items_emb = self.embedding_item.weight
+        all_emb = torch.cat([users_emb, items_emb])
+        A = self.interactionGraph
+        S = self.socialGraph
+
+        embs = []
+        for layer in range(self.n_layers):
+            users_emb, items_emb = torch.split(all_emb, [self.num_users, self.num_items])
+            users_emb_social = torch.sparse.mm(S, users_emb)
+            all_emb_interaction = torch.sparse.mm(A, all_emb)
+            if perturbed:
+                users_emb_social = users_emb_social + self.random_noise(users_emb_social)
+                all_emb_interaction = all_emb_interaction + self.random_noise(all_emb_interaction)
+            users_emb_interaction, items_emb_next = torch.split(all_emb_interaction, [self.num_users, self.num_items])
+            users_emb_next = self.Graph_Comb(users_emb_social, users_emb_interaction)
+            all_emb = torch.cat([users_emb_next, items_emb_next])
+            embs.append(all_emb)
+        embs = torch.stack(embs, dim=1)
+        final_embs = torch.mean(embs, dim=1)
+        users, items = torch.split(final_embs, [self.num_users, self.num_items])
+        self.final_user, self.final_item = users, items
+        return users, items
 
 
 class SocialLGN(LightGCN):

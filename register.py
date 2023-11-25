@@ -7,9 +7,9 @@ import world
 
 
 if world.dataset in ['lastfm', 'ciao', 'epinions', 'douban', 'gowalla']:
-    if world.model_name in ['SocialLGN']:
+    if world.model_name in ['SocialLGN','SocialSimGCL']:
         dataset = dataloader.SocialGraphDataset(world.dataset)
-    elif world.model_name in ['LightGCN']:
+    elif world.model_name in ['LightGCN', 'SimGCL']:
         dataset = dataloader.GraphDataset(world.dataset)
     elif world.model_name in ['bpr']:
         dataset = dataloader.PairDataset(world.dataset)
@@ -26,5 +26,7 @@ print('===========end===================')
 MODELS = {
     'bpr': model.PureBPR,
     'LightGCN': model.LightGCN,
+    'SimGCL': model.SimGCL,
     'SocialLGN': model.SocialLGN,
+    'SocialSimGCL': model.SocialSimGCL,
 }

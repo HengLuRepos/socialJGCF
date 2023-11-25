@@ -31,6 +31,10 @@ config['decay'] = args.decay
 
 config['test_u_batch_size'] = args.testbatch
 
+config['noise_norm'] = args.noise_norm
+config['lam'] = args.lam
+config['tau'] = args.tau
+
 
 GPU = torch.cuda.is_available()
 device = torch.device('cuda' if GPU else "cpu")
