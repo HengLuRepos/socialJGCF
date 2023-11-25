@@ -139,7 +139,6 @@ class SimGCL(LightGCN):
         noise = F.normalize(noise, dim=1) * self.noise_norm * torch.sign(tensor)
         return noise
 
-
     def computer(self, perturbed=False):
         if not perturbed:
             return super().computer()
@@ -154,7 +153,7 @@ class SimGCL(LightGCN):
                 embs.append(embed)
             embs = torch.stack(embs, dim=1)
             out = torch.mean(embs, dim=1)
-            users, items = torch.split(out, [self.num_user, self.num_item])
+            users, items = torch.split(out, [self.num_users, self.num_items])
             return users, items
     def infoNCE(self, emb1, emb2):
         emb1, emb2 = F.normalize(emb1, dim=1), F.normalize(emb2, dim=1)

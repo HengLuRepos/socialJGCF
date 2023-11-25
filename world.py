@@ -19,7 +19,7 @@ if not os.path.exists(FILE_PATH):
 
 config = {}
 all_dataset = ['lastfm', 'ciao']
-all_models = ['bpr', 'LightGCN', 'SocialLGN']
+all_models = ['bpr', 'LightGCN', 'SocialLGN','SimGCL','SocialSimGCL']
 
 config['layer'] = args.layer
 
