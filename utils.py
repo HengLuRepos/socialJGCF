@@ -26,7 +26,23 @@ class BPRLoss:
         self.opt.step()
 
         return loss.cpu().item()
+class SimGCLLoss:
+    def __init__(self, recmodel, config):
+        self.model = recmodel
+        self.weight_decay = config['decay']
+        self.lr = config['lr']
+        self.opt = optim.Adam(recmodel.parameters(), lr=self.lr)
+    def stageOne(self, users, pos, neg):
+        loss, reg_loss = self.model.bpr_loss(users, pos, neg)
+        reg_loss = reg_loss * self.weight_decay
+        loss = loss + reg_loss
 
+        cl_loss = self.model.cl_loss(users, pos)
+        loss = loss + cl_loss
+
+        self.opt.zero_grad()
+        loss.backward()
+        self.opt.step()
 
 def UniformSample_original(users, dataset):
     total_start = time()

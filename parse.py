@@ -25,4 +25,7 @@ def parse_args():
                         help="the batch size of users for testing")
     parser.add_argument('--load', type=int, default=0)
     parser.add_argument('--seed', type=int, default=2020, help='random seed')
+    parser.add_argument('--noise-norm', type=float, default=0.1)
+    parser.add_argument('--tau', type=float, default=0.2, help="temperature")
+    parser.add_argument('--lam', type=float, default=0.5, help='cl_loss')
     return parser.parse_args()
