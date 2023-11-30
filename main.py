@@ -61,6 +61,7 @@ try:
                 low_count_cold = 0
 
         loss = Procedure.train_original(dataset, Recmodel, loss_class, epoch)
+        Recmodel.final_user, Recmodel.final_item = Recmodel.computer()
         print(f'[saved][aver loss{loss:.3e}]')
         torch.save(Recmodel.state_dict(), weight_file)
 finally:

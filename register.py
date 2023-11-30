@@ -29,4 +29,6 @@ MODELS = {
     'SimGCL': model.SimGCL,
     'SocialLGN': model.SocialLGN,
     'SocialSimGCL': model.SocialSimGCL,
+    'JGCF': model.JGCF,
+    'SocialJGCF': model.SocialJGCF,
 }

@@ -28,4 +28,7 @@ def parse_args():
     parser.add_argument('--noise-norm', type=float, default=0.1)
     parser.add_argument('--tau', type=float, default=0.2, help="temperature")
     parser.add_argument('--lam', type=float, default=0.5, help='cl_loss')
+    parser.add_argument('--a', type=float, default=1., help='a of Jacobian')
+    parser.add_argument('--b', type=float, default=1., help='b of Jacobian')
+    parser.add_argument('--alpha', type=float, default=0.1, help='alpha')
     return parser.parse_args()

@@ -117,6 +117,33 @@ class LightGCN(nn.Module):
         loss = torch.mean(torch.nn.functional.softplus(neg_scores - pos_scores))
 
         return loss, reg_loss
+class JGCF(LightGCN):
+    def __init__(self, config, dataset):
+        self.a = config['a']
+        self.b = config['b']
+        self.alpha = config['alpha']
+    def computer(self):
+        all_num = self.num_user + self.num_item
+        eye = torch.sparse_coo_tensor([range(all_num),range(all_num)],torch.ones(all_num), dtype=torch.float32, device=self.interactionGraph.device)
+        user_weight = self.embedding_user.weight
+        item_weight = self.embedding_item.weight
+        embed = torch.cat([user_weight, item_weight])
+
+        p0 = eye
+        p1 = (self.a - self.b)/2 * eye + (self.a + self.b)/2 * self.interactionGraph
+        embs = [torch.sparse.mm(eye, embed), torch.sparse.mm(p1, embed)]
+        for k in range(2, self.layers + 1):
+            theta_1 = (2*k + self.a + self.b) * (2*k + self.a + self.b - 1) / ((k + self.a + self.b) * 2*k)
+            theta_2 = ((2*k + self.a + self.b - 1)*(self.a**2 - self.b**2)) /((2*k + self.a + self.b - 2) * (k + self.a + self.b) * 2 * k)
+            emb_k = theta_1 * torch.sparse.mm(self.interactionGraph, embs[-1]) + theta_2 * embs[-1]
+            theta_3 = ((k + self.a - 1) * (k + self.b - 1) * (2*k + self.a + self.b)) / (k*(self.a + self.b + k)*(2*k + self.a + self.b -2))
+            emb_k -= theta_3 * embs[-2]
+            embs.append(emb_k)
+        band_stop = torch.stack(embs, dim=1).mean(dim=1)
+        band_pass = torch.tanh(self.alpha * embed - band_stop)
+        out = torch.hstack([band_stop, band_pass])
+        users, items = torch.split(out, [self.num_user, self.num_item])
+        return users, items
 
 class SimGCL(LightGCN):
     def __init__(self, config, dataset):
@@ -140,31 +167,37 @@ class SimGCL(LightGCN):
         return noise
 
     def computer(self, perturbed=False):
-        if not perturbed:
-            return super().computer()
-        else:
-            user_weight = self.embedding_user.weight
-            item_weight = self.embedding_item.weight
-            embed = torch.cat([user_weight, item_weight])
-            embs = []
-            for layer in range(self.n_layers):
-                prod = torch.sparse.mm(self.interactionGraph, embed)
-                embed = prod + self.random_noise(prod)
-                embs.append(embed)
-            embs = torch.stack(embs, dim=1)
-            out = torch.mean(embs, dim=1)
-            users, items = torch.split(out, [self.num_users, self.num_items])
-            return users, items
+        user_weight = self.embedding_user.weight
+        item_weight = self.embedding_item.weight
+        embed = torch.cat([user_weight, item_weight])
+        embs = []
+        for layer in range(self.n_layers):
+            embed = torch.sparse.mm(self.interactionGraph, embed)
+            if perturbed:
+                embed = embed + self.random_noise(embed)
+            embs.append(embed)
+        embs = torch.stack(embs, dim=1)
+        out = torch.mean(embs, dim=1)
+        users, items = torch.split(out, [self.num_users, self.num_items])
+        #if not perturbed:
+        #    self.final_user, self.final_item = users, items
+        return users, items
     def infoNCE(self, emb1, emb2):
         emb1, emb2 = F.normalize(emb1, dim=1), F.normalize(emb2, dim=1)
         pos_score = (emb1 @ emb2.T) / self.tau
         score = torch.diag(F.log_softmax(pos_score, dim=1))
         return -score.mean()
-
+class SocialJGCF(JGCF):
+    def _init_weight(self):
+        super(SocialJGCF, self)._init_weight()
+        self.socialGraph = self.dataset.getSocialGraph()
+        self.Graph_Comb = Graph_Comb(self.latent_dim)
+    def computer(self):
+        pass
 class SocialSimGCL(SimGCL):
 
     def _init_weight(self):
-        super(SocialLGN, self)._init_weight()
+        super(SocialSimGCL, self)._init_weight()
         self.socialGraph = self.dataset.getSocialGraph()
         self.Graph_Comb = Graph_Comb(self.latent_dim)
     
@@ -191,7 +224,8 @@ class SocialSimGCL(SimGCL):
         embs = torch.stack(embs, dim=1)
         final_embs = torch.mean(embs, dim=1)
         users, items = torch.split(final_embs, [self.num_users, self.num_items])
-        self.final_user, self.final_item = users, items
+        #if not perturbed:
+        #    self.final_user, self.final_item = users, items
         return users, items
 
 
