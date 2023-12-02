@@ -119,11 +119,12 @@ class LightGCN(nn.Module):
         return loss, reg_loss
 class JGCF(LightGCN):
     def __init__(self, config, dataset):
+        super(JGCF, self).__init__(config, dataset)
         self.a = config['a']
         self.b = config['b']
         self.alpha = config['alpha']
     def computer(self):
-        all_num = self.num_user + self.num_item
+        all_num = self.num_users + self.num_items
         eye = torch.sparse_coo_tensor([range(all_num),range(all_num)],torch.ones(all_num), dtype=torch.float32, device=self.interactionGraph.device)
         user_weight = self.embedding_user.weight
         item_weight = self.embedding_item.weight
@@ -132,7 +133,7 @@ class JGCF(LightGCN):
         p0 = eye
         p1 = (self.a - self.b)/2 * eye + (self.a + self.b)/2 * self.interactionGraph
         embs = [torch.sparse.mm(eye, embed), torch.sparse.mm(p1, embed)]
-        for k in range(2, self.layers + 1):
+        for k in range(2, self.n_layers + 1):
             theta_1 = (2*k + self.a + self.b) * (2*k + self.a + self.b - 1) / ((k + self.a + self.b) * 2*k)
             theta_2 = ((2*k + self.a + self.b - 1)*(self.a**2 - self.b**2)) /((2*k + self.a + self.b - 2) * (k + self.a + self.b) * 2 * k)
             emb_k = theta_1 * torch.sparse.mm(self.interactionGraph, embs[-1]) + theta_2 * embs[-1]
@@ -142,8 +143,11 @@ class JGCF(LightGCN):
         band_stop = torch.stack(embs, dim=1).mean(dim=1)
         band_pass = torch.tanh(self.alpha * embed - band_stop)
         out = torch.hstack([band_stop, band_pass])
-        users, items = torch.split(out, [self.num_user, self.num_item])
+        users, items = torch.split(out, [self.num_users, self.num_items])
+        self.final_user, self.final_item = users, items
         return users, items
+    def propagate(self, use_iteractionGraph=True, graph=None):
+        pass
 
 class SimGCL(LightGCN):
     def __init__(self, config, dataset):
@@ -193,7 +197,15 @@ class SocialJGCF(JGCF):
         self.socialGraph = self.dataset.getSocialGraph()
         self.Graph_Comb = Graph_Comb(self.latent_dim)
     def computer(self):
-        pass
+        users_emb = self.embedding_user.weight
+        items_emb = self.embedding_item.weight
+        all_emb = torch.cat([users_emb, items_emb])
+        A = self.interactionGraph
+        S = self.socialGraph
+        embs = [all_emb]
+        for layer in range(self.n_layers):
+            users_emb, items_emb = torch.split(all_emb, [self.num_users, self.num_items])
+            
 class SocialSimGCL(SimGCL):
 
     def _init_weight(self):
@@ -265,13 +277,11 @@ class SocialLGN(LightGCN):
 class Graph_Comb(nn.Module):
     def __init__(self, embed_dim):
         super(Graph_Comb, self).__init__()
-        self.att_x = nn.Linear(embed_dim, embed_dim, bias=False)
-        self.att_y = nn.Linear(embed_dim, embed_dim, bias=False)
-        self.comb = nn.Linear(embed_dim * 2, embed_dim)
+        #self.att_x = nn.Linear(embed_dim, embed_dim, bias=False)
+        #self.att_y = nn.Linear(embed_dim, embed_dim, bias=False)
+        self.comb = nn.Linear(embed_dim, embed_dim)
 
     def forward(self, x, y):
-        h1 = torch.tanh(self.att_x(x))
-        h2 = torch.tanh(self.att_y(y))
-        output = self.comb(torch.cat((h1, h2), dim=1))
-        output = output / output.norm(2)
+        output = self.comb(x + y)
+        #output = output / output.norm(2)
         return output

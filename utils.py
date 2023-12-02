@@ -88,7 +88,7 @@ def set_seed(seed):
 def getFileName():
     if world.model_name == 'bpr':
         file = f"mf-{world.dataset}-{world.config['latent_dim_rec']}.pth.tar"
-    elif world.model_name in ['LightGCN', 'SocialLGN','SimGCL','SocialSimGCL']:
+    elif world.model_name in ['LightGCN', 'SocialLGN','SimGCL','SocialSimGCL','JGCF','SocialJGCF']:
         file = f"{world.model_name}-{world.dataset}-{world.config['layer']}layer-" \
                f"{world.config['latent_dim_rec']}.pth.tar"
     return os.path.join(world.FILE_PATH, file)
