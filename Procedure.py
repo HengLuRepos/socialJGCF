@@ -101,5 +101,6 @@ def Test(dataset, Recmodel, epoch, cold=False, w=None):
         results['recall'] /= float(len(users))
         results['precision'] /= float(len(users))
         results['ndcg'] /= float(len(users))
+        print(world.model_name)
         print(results)
         return results
