@@ -242,11 +242,15 @@ class Graph_Comb_JGCF(nn.Module):
         #self.att_y = nn.Linear(embed_dim * 2, embed_dim * 2, bias=False)
         self.comb = nn.Linear(embed_dim * 2, embed_dim * 2)
         nn.init.normal_(self.comb.weight, std=0.1)
+        self.ratio_like = nn.Parameter(torch.tensor(0.0), requires_grad=True)
 
     def forward(self, x, y):
         #h1 = torch.tanh(self.att_x(x))
         #h2 = torch.tanh(self.att_y(y))
-        output = self.comb(x + y)
+        #inputs = torch.hstack([x,y])
+        #output = (x + y) / 2
+        ratio = torch.sigmoid(self.ratio_like)
+        output = ratio * x + (1.0 - ratio) * y
         #output = output / output.norm(2)
         return output         
             

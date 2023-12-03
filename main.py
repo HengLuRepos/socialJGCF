@@ -8,7 +8,7 @@ import register
 import utils
 import world
 from register import dataset
-
+from pprint import pprint
 # ==============================
 utils.set_seed(world.seed)
 print(">>SEED:", world.seed)
@@ -39,6 +39,7 @@ try:
         start = time.time()
         if epoch % 10 == 1 or epoch == world.TRAIN_epochs:
             print("[TEST]")
+            print(f"ratio: {torch.sigmoid(Recmodel.Graph_Comb.ratio_like).detach().cpu().item()}")
             results = Procedure.Test(dataset, Recmodel, epoch, False)
             results_cold = Procedure.Test(dataset, Recmodel, epoch, True)
             if results['ndcg'][0] < best_ndcg:
@@ -65,6 +66,8 @@ try:
         print(f'[saved][aver loss{loss:.3e}]')
         torch.save(Recmodel.state_dict(), weight_file)
 finally:
+    pprint(world.config)
+    print(f"ratio: {torch.sigmoid(Recmodel.Graph_Comb.ratio_like).detach().cpu().item()}")
     print(f"\nbest recall at 10:{best_recall}")
     print(f"best ndcg at 10:{best_ndcg}")
     print(f"best precision at 10:{best_pre}")
