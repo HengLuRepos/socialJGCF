@@ -39,7 +39,7 @@ config['b'] = args.b
 config['alpha'] = args.alpha
 
 GPU = torch.cuda.is_available()
-device = torch.device('cuda:1' if GPU else "cpu")
+device = torch.device('cuda:0' if GPU else "cpu")
 seed = args.seed
 LOAD = args.load
 PATH = './checkpoints'
