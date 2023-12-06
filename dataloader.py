@@ -275,6 +275,28 @@ def loadInteraction(src='lastfm', prepro='origin', binary=True, posThreshold=Non
         df = pd.DataFrame(prime, columns=['user', 'item', 'rating', 'timestamp'])
         del prime, d, user, item, rating, timestamp
         gc.collect()
+    
+    elif src == 'epinions':
+        d = sio.loadmat(f'./data/raw/{src}/rating_with_timestamp.mat')
+        prime = []
+        for val in d['rating_with_timestamp']:
+            user, item, rating, timestamp = val[0], val[1], val[3], val[5]
+            prime.append([user, item, rating, timestamp])
+        df = pd.DataFrame(prime, columns=['user', 'item', 'rating', 'timestamp'])
+        del prime, d, user, item, rating, timestamp
+        gc.collect()
+    
+    elif src == 'douban':
+        prime = []
+        with open(f"./data/raw/{src}/ratings.txt") as f:
+            for line in f.readlines():
+                if len(line) > 0:
+                    line = line.strip('\n').split(' ')
+                    user, item, rating = line
+                    prime.append([user, item, rating])
+        df = pd.DataFrame(prime, columns=['user', 'item', 'rating'])
+        del prime
+        gc.collect()
     else:
         raise ValueError('Invalid Dataset Error')
 
@@ -390,7 +412,7 @@ def loadFriend(src):
         friendNet = pd.read_csv(f'./data/raw/{src}/user_friends.dat', sep='\t')
         friendNet.rename(columns={'userID': 'user', 'friendID': 'friend'}, inplace=True)
 
-    elif src == 'ciao':
+    elif src in ['ciao', 'epinions']:
         d = sio.loadmat(f'./data/raw/{src}/trust.mat')
         prime = []
         for val in d['trust']:
@@ -398,6 +420,17 @@ def loadFriend(src):
             prime.append([user, friend])
         friendNet = pd.DataFrame(prime, columns=['user', 'friend'])
         del prime, d, user, friend, val
+        gc.collect()
+    elif src == 'douban':
+        prime = []
+        with open(f"./data/raw/{src}/trusts.txt") as f:
+            for line in f.readlines():
+                if len(line) > 0:
+                    line = line.strip('\n').split(' ')
+                    user, friend, _ = line
+                    prime.append([user, friend])
+        friendNet = pd.DataFrame(prime, columns=['user', 'friend'])
+        del prime
         gc.collect()
     else:
         raise ValueError('Invalid Dataset Error')
