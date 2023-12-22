@@ -1,0 +1,103 @@
+715909 interactions for training
+178978 interactions for testing
+Number of users: 2848
+ Number of items: 39586
+Number of Ratings: 894887
+douban Rating Density: 0.007937552190452078
+===========config================
+{'a': 1.9,
+ 'alpha': 0.1,
+ 'b': 1.1,
+ 'bpr_batch_size': 2048,
+ 'decay': 0.0001,
+ 'lam': 0.5,
+ 'latent_dim_rec': 64,
+ 'layer': 4,
+ 'lr': 0.001,
+ 'noise_norm': 0.1,
+ 'tau': 0.2,
+ 'test_u_batch_size': 100}
+2023-12-18 01:08:58
+LOAD: 0
+Weight path: ./checkpoints
+Test Topks: [5, 10, 20, 30, 50]
+using bpr loss
+===========end===================
+>>SEED: 2020
+JGCF is already to go
+load and save to ./checkpoints/JGCF-douban-4layer-64.pth.tar
+======================
+EPOCH[0/10000]
+[saved][aver loss2.577e-01]
+======================
+EPOCH[1/10000]
+[TEST]
+JGCF
+{'precision': array([0.132287  , 0.12073991, 0.10579223, 0.09880419, 0.09020179]), 'recall': array([0.0195699 , 0.03306501, 0.053372  , 0.0695212 , 0.10042009]), 'ndcg': array([0.13737034, 0.13060814, 0.12274594, 0.120507  , 0.12251796])}
+test_u_batch_size is too big for this dataset, try a small one 42
+JGCF
+{'precision': array([0.01809524, 0.01428571, 0.01142857, 0.00944444, 0.00795238]), 'recall': array([0.03169424, 0.05365852, 0.0847528 , 0.09881373, 0.13651884]), 'ndcg': array([0.02766386, 0.0350375 , 0.04548237, 0.04996768, 0.05950324])}
+[saved][aver loss2.173e-01]
+======================
+EPOCH[2/10000]
+[saved][aver loss2.065e-01]
+======================
+EPOCH[3/10000]
+[saved][aver loss1.991e-01]
+======================
+EPOCH[4/10000]
+[saved][aver loss1.946e-01]
+======================
+EPOCH[5/10000]
+[saved][aver loss1.908e-01]
+======================
+EPOCH[6/10000]
+[saved][aver loss1.854e-01]
+======================
+EPOCH[7/10000]
+[saved][aver loss1.811e-01]
+======================
+EPOCH[8/10000]
+[saved][aver loss1.756e-01]
+======================
+EPOCH[9/10000]
+[saved][aver loss1.723e-01]
+======================
+EPOCH[10/10000]
+[saved][aver loss1.683e-01]
+======================
+EPOCH[11/10000]
+[TEST]
+JGCF
+{'precision': array([0.15298954, 0.14656203, 0.12795217, 0.11635526, 0.10242152]), 'recall': array([0.01470144, 0.03052763, 0.05572395, 0.07198264, 0.10039232]), 'ndcg': array([0.15442273, 0.15201581, 0.14265412, 0.13708562, 0.13379257])}
+test_u_batch_size is too big for this dataset, try a small one 42
+JGCF
+{'precision': array([0.01333333, 0.01214286, 0.01130952, 0.0097619 , 0.00785714]), 'recall': array([0.01923109, 0.04246624, 0.08632309, 0.1020969 , 0.13201385]), 'ndcg': array([0.01659768, 0.02499857, 0.03866531, 0.04388654, 0.05175843])}
+[saved][aver loss1.651e-01]
+======================
+EPOCH[12/10000]
+[saved][aver loss1.611e-01]
+======================
+EPOCH[13/10000]
+{'a': 1.9,
+ 'alpha': 0.1,
+ 'b': 1.1,
+ 'bpr_batch_size': 2048,
+ 'decay': 0.0001,
+ 'lam': 0.5,
+ 'latent_dim_rec': 64,
+ 'layer': 4,
+ 'lr': 0.001,
+ 'noise_norm': 0.1,
+ 'tau': 0.2,
+ 'test_u_batch_size': 100}
+
+best recall at 10:0.030527628556284464
+best ndcg at 10:0.152015807470663
+best precision at 10:0.14656203288490283
+
+best recall at 10:0.05365852401566687
+best ndcg at 10:0.03503750232874809
+best precision at 10:0.014285714285714285
+best result: {'precision': array([0.15298954, 0.14656203, 0.12795217, 0.11635526, 0.10242152]), 'recall': array([0.01470144, 0.03052763, 0.05572395, 0.07198264, 0.10039232]), 'ndcg': array([0.15442273, 0.15201581, 0.14265412, 0.13708562, 0.13379257])}
+best result cold: {'precision': array([0.01809524, 0.01428571, 0.01142857, 0.00944444, 0.00795238]), 'recall': array([0.03169424, 0.05365852, 0.0847528 , 0.09881373, 0.13651884]), 'ndcg': array([0.02766386, 0.0350375 , 0.04548237, 0.04996768, 0.05950324])}

@@ -56,7 +56,7 @@ def Test(dataset, Recmodel, epoch, cold=False, w=None):
     else:
         testDict: dict = dataset.testDict
     Recmodel = Recmodel.eval()
-    Recmodel.computer()
+    #Recmodel.computer()
     max_K = max(world.topks)
     results = {'precision': np.zeros(len(world.topks)),
                'recall': np.zeros(len(world.topks)),

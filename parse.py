@@ -19,7 +19,7 @@ def parse_args():
     parser.add_argument('--layer', type=int, default=3,
                         help="the layer num of graphs")
     # normally unchanged
-    parser.add_argument('--topks', nargs='?', default="[10, 20]",
+    parser.add_argument('--topks', nargs='?', default="[5, 10, 20, 30, 50]",
                         help="@k test list")
     parser.add_argument('--testbatch', type=str, default=100,
                         help="the batch size of users for testing")
@@ -29,6 +29,6 @@ def parse_args():
     parser.add_argument('--tau', type=float, default=0.2, help="temperature")
     parser.add_argument('--lam', type=float, default=0.5, help='cl_loss')
     parser.add_argument('--a', type=float, default=1., help='a of Jacobian')
-    parser.add_argument('--b', type=float, default=1., help='b of Jacobian')
+    parser.add_argument('--b', type=float, default=1.1, help='b of Jacobian')
     parser.add_argument('--alpha', type=float, default=0.1, help='alpha')
     return parser.parse_args()

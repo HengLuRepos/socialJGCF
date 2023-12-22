@@ -238,21 +238,20 @@ class SocialJGCF(JGCF):
 class Graph_Comb_JGCF(nn.Module):
     def __init__(self, embed_dim):
         super(Graph_Comb_JGCF, self).__init__()
-        #self.att_x = nn.Linear(embed_dim * 2, embed_dim * 2, bias=False)
-        #self.att_y = nn.Linear(embed_dim * 2, embed_dim * 2, bias=False)
-        self.comb = nn.Linear(embed_dim * 2, embed_dim * 2)
+        self.att_x = nn.Linear(embed_dim * 2, embed_dim * 2, bias=False)
+        self.att_y = nn.Linear(embed_dim * 2, embed_dim * 2, bias=False)
+        self.comb = nn.Linear(embed_dim * 4, embed_dim * 2)
         nn.init.normal_(self.comb.weight, std=0.1)
         self.ratio_like = nn.Parameter(torch.tensor(0.0), requires_grad=True)
 
     def forward(self, x, y):
         #h1 = torch.tanh(self.att_x(x))
         #h2 = torch.tanh(self.att_y(y))
-        #inputs = torch.hstack([x,y])
-        #output = (x + y) / 2
+        #output = self.comb(torch.cat((h1, h2), dim=1))
         ratio = torch.sigmoid(self.ratio_like)
         output = ratio * x + (1.0 - ratio) * y
         #output = output / output.norm(2)
-        return output         
+        return output
             
 class SocialSimGCL(SimGCL):
 
