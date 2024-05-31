@@ -19,7 +19,7 @@ if not os.path.exists(FILE_PATH):
 
 config = {}
 all_dataset = ['lastfm', 'ciao', 'douban', 'epinions']
-all_models = ['bpr', 'LightGCN', 'SocialLGN','SimGCL','SocialSimGCL', 'JGCF', 'SocialJGCF']
+all_models = ['bpr', 'LightGCN', 'SocialLGN','SimGCL','SocialSimGCL', 'JGCF', 'SocialJGCF', 'SocialJGCFOrigin']
 
 config['layer'] = args.layer
 
@@ -39,7 +39,7 @@ config['b'] = args.b
 config['alpha'] = args.alpha
 
 GPU = torch.cuda.is_available()
-device = torch.device('cuda:1' if GPU else "cpu")
+device = torch.device('cuda' if GPU else "cpu")
 seed = args.seed
 LOAD = args.load
 PATH = './checkpoints'

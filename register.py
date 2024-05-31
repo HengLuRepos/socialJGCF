@@ -7,7 +7,7 @@ import world
 
 
 if world.dataset in ['lastfm', 'ciao', 'epinions', 'douban', 'gowalla']:
-    if world.model_name in ['SocialLGN','SocialSimGCL','SocialJGCF']:
+    if world.model_name in ['SocialLGN','SocialSimGCL','SocialJGCF','SocialJGCFOrigin']:
         dataset = dataloader.SocialGraphDataset(world.dataset)
     elif world.model_name in ['LightGCN', 'SimGCL','JGCF']:
         dataset = dataloader.GraphDataset(world.dataset)
@@ -31,4 +31,5 @@ MODELS = {
     'SocialSimGCL': model.SocialSimGCL,
     'JGCF': model.JGCF,
     'SocialJGCF': model.SocialJGCF,
+    'SocialJGCFOrigin': model.SocialJGCFOrigin
 }

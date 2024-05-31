@@ -321,12 +321,64 @@ class SocialLGN(LightGCN):
         return users, items
 
 
+
+
+
+class SocialJGCFOrigin(JGCF):
+    def _init_weight(self):
+        super(SocialJGCFOrigin, self)._init_weight()
+        self.socialGraph = self.dataset.getSocialGraph()
+        self.Graph_Comb = Graph_Comb(self.latent_dim)
+    def computer(self):
+        users_emb = self.embedding_user.weight
+        items_emb = self.embedding_item.weight
+        all_emb = torch.cat([users_emb, items_emb])
+        A = self.interactionGraph
+        S = self.socialGraph
+        all_num = self.num_users + self.num_items
+        inter_eye = torch.sparse_coo_tensor([range(all_num),range(all_num)],torch.ones(all_num), dtype=torch.float32, device=A.device)
+        social_eye = torch.sparse_coo_tensor([range(self.num_users),range(self.num_users)],torch.ones(self.num_users), dtype=torch.float32, device=S.device)
+        
+        p0_inter = inter_eye
+        p1_inter = (self.a - self.b)/2 * inter_eye + (self.a + self.b)/2 * A
+        
+        p0_social = social_eye
+        p1_social = (self.a - self.b)/2 * social_eye + (self.a + self.b)/2 * S
+
+        embs = [torch.sparse.mm(inter_eye, all_emb), torch.sparse.mm(p1_inter, all_emb)]
+        social_embs = [torch.sparse.mm(social_eye, users_emb), torch.sparse.mm(p1_social, users_emb)]
+        for k in range(2, self.n_layers + 1):
+            theta_1 = (2*k + self.a + self.b) * (2*k + self.a + self.b - 1) / ((k + self.a + self.b) * 2*k)
+            theta_2 = ((2*k + self.a + self.b - 1)*(self.a**2 - self.b**2)) /((2*k + self.a + self.b - 2) * (k + self.a + self.b) * 2 * k)
+            theta_3 = ((k + self.a - 1) * (k + self.b - 1) * (2*k + self.a + self.b)) / (k*(self.a + self.b + k)*(2*k + self.a + self.b -2))
+            inter_emb_k = theta_1 * torch.sparse.mm(A, embs[-1]) + theta_2 * embs[-1]
+            inter_emb_k -= theta_3 * embs[-2]
+            embs.append(inter_emb_k)
+
+            social_emb_k = theta_1 * torch.sparse.mm(S, social_embs[-1]) + theta_2 * social_embs[-1]
+            social_emb_k -= theta_3 * social_emb_k[-2]
+            social_embs.append(social_emb_k)
+        band_stop_inter = torch.stack(embs, dim=1).mean(dim=1)
+        band_pass_inter = torch.tanh(self.alpha * all_emb - band_stop_inter)
+        inter_out = torch.hstack([band_stop_inter, band_pass_inter])
+        inter_users_emb, items_emb_next = torch.split(inter_out, [self.num_users, self.num_items])
+        
+        band_stop_social = torch.stack(social_embs, dim=1).mean(dim=1)
+        band_pass_social = torch.tanh(self.alpha * users_emb - band_stop_social)
+        users_social = torch.hstack([band_stop_social, band_pass_social])
+        users_emb_next = self.Graph_Comb(users_social, inter_users_emb)
+        self.final_user, self.final_item = users_emb_next, items_emb_next
+        return users_emb_next, items_emb_next
+
+
+
+
 class Graph_Comb(nn.Module):
     def __init__(self, embed_dim):
         super(Graph_Comb, self).__init__()
-        self.att_x = nn.Linear(embed_dim, embed_dim, bias=False)
-        self.att_y = nn.Linear(embed_dim, embed_dim, bias=False)
-        self.comb = nn.Linear(embed_dim * 2, embed_dim)
+        self.att_x = nn.Linear(embed_dim*2, embed_dim*2, bias=False)
+        self.att_y = nn.Linear(embed_dim*2, embed_dim*2, bias=False)
+        self.comb = nn.Linear(embed_dim * 4, embed_dim*2)
 
     def forward(self, x, y):
         h1 = torch.tanh(self.att_x(x))
